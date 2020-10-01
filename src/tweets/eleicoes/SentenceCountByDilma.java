@@ -23,9 +23,9 @@ import br.ufc.great.hadoop.commons.utils.ReadTSV;
 
 public class SentenceCountByDilma {
 	
-	public static class MyMapper extends Mapper<Object, Text, Text, IntWritable> {
-		public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
-			Tweet tweet = ReadTSV.parse(value.toString());
+	public static class MapperClass extends Mapper<Object, Text, Text, IntWritable> {
+		public void map(Object key, Text data, Context context) throws IOException, InterruptedException {
+			Tweet tweet = ReadTSV.parse(data.toString());
 			if(tweet.isRelatedDilma()) {
 				ArrayList<String> nGrams = tweet.getNGrams();
 				for (String ngram : nGrams) {
@@ -35,7 +35,7 @@ public class SentenceCountByDilma {
 		}
 	}
 	
-	public static class MyReducer extends Reducer<Text, IntWritable, Text, NullWritable> {
+	public static class ReducerClass extends Reducer<Text, IntWritable, Text, NullWritable> {
 		public void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
 			int count = 0;
 			for (IntWritable val : values) {
@@ -49,26 +49,26 @@ public class SentenceCountByDilma {
 	}
 
 	public static void main(String[] args) throws Exception {
-		String inputDIR = null, outputDIR = null;
+		String input_dir = null, output_dir = null;
 		if(MyEnv.isDevelopment) {
 			// Only in development environment...
-			inputDIR = "D:/dev/github/pedroalmir/cloud_study/hadoop/tests/tweets";
-			outputDIR = "D:/dev/github/pedroalmir/cloud_study/hadoop/tests/output";
+			input_dir = "D:/dev/github/pedroalmir/cloud_study/hadoop/tests/tweets";
+			output_dir = "D:/dev/github/pedroalmir/cloud_study/hadoop/tests/output";
 			
-			File outputDIRFile = new File(outputDIR);
-			if(outputDIRFile.exists()) {
-				MyFileUtils.delete(outputDIRFile);
+			File output_dirFile = new File(output_dir);
+			if(output_dirFile.exists()) {
+				MyFileUtils.delete(output_dirFile);
 			}
 		}else {
-			inputDIR = args[0];
-			outputDIR = args[1];
+			input_dir = args[0];
+			output_dir = args[1];
 		}
 		
 		Configuration conf = new Configuration();
 		Job job = new Job(conf, "q2d-sentence-count-by-dilma");
 		job.setJarByClass(SentenceCountByDilma.class);
-		job.setMapperClass(MyMapper.class);
-		job.setReducerClass(MyReducer.class);
+		job.setMapperClass(MapperClass.class);
+		job.setReducerClass(ReducerClass.class);
 		
 		job.setMapOutputKeyClass(Text.class);
 		job.setMapOutputValueClass(IntWritable.class);
@@ -76,8 +76,8 @@ public class SentenceCountByDilma {
 		job.setOutputKeyClass(Text.class);
 		job.setOutputValueClass(NullWritable.class);
 		
-		FileInputFormat.addInputPath(job, new Path(inputDIR));
-		FileOutputFormat.setOutputPath(job, new Path(outputDIR));
+		FileInputFormat.addInputPath(job, new Path(input_dir));
+		FileOutputFormat.setOutputPath(job, new Path(output_dir));
 		
 		System.exit(job.waitForCompletion(true) ? 0 : 1);
 	}
